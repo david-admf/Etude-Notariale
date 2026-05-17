@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Étude Notariale — Gestion</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:       #12100e;
+  --ink-mid:   #3d3a36;
+  --ink-muted: #8c8680;
+  --paper:     #f8f5f0;
+  --paper-mid: #ede9e2;
+  --paper-dark:#e0dbd2;
+  --white:     #ffffff;
+  --navy:      #0e2444;
+  --navy-mid:  #1a3660;
+  --navy-light:#2a527e;
+  --gold:      #a0783a;
+  --gold-light:#c09650;
+  --gold-pale: #f5edd8;
+  --green:     #1e6b3c;
+  --green-bg:  #eaf5ec;
+  --amber:     #8a5c00;
+  --amber-bg:  #fef7e0;
+  --red:       #8a1f1f;
+  --red-bg:    #fceaea;
+  --blue-bg:   #e8f0f9;
+  --shadow-sm: 0 1px 4px rgba(14,36,68,.06);
+  --shadow-md: 0 4px 16px rgba(14,36,68,.10);
+  --shadow-lg: 0 12px 40px rgba(14,36,68,.16);
+  --radius:    7px;
+  --sidebar:   230px;
+  --topbar:    54px;
+  --transition: .18s cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Outfit',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-size:14px;
+}
+
+/* ── TOPBAR ─────────────────────────────── */
+.topbar{
+  height:var(--topbar);
+  background:var(--navy);
+  display:flex;
+  align-items:center;
+  padding:0 20px 0 0;
+  flex-shrink:0;
+  position:relative;
+}
+.topbar::after{
+  content:'';
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold));
+}
+.topbar-brand{
+  width:var(--sidebar);
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:0 20px;
+  flex-shrink:0;
+}
+.brand-seal{
+  width:34px;height:34px;
+  border:1.5px solid var(--gold);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;
+  font-size:11px;color:var(--gold);
+  letter-spacing:-0.5px;
+  flex-shrink:0;
+}
+.brand-name{
+  font-family:'Libre Baskerville',serif;
+  font-size:13px;
+  color:var(--white);
+  line-height:1.25;
+  letter-spacing:0.2px;
+}
+.brand-name small{
+  display:block;
+  font-size:10px;
+  color:rgba(255,255,255,.4);
+  font-family:'Outfit',sans-serif;
+  font-weight:300;
+  letter-spacing:0.5px;
+}
+.topbar-mid{flex:1}
+.topbar-status{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:rgba(255,255,255,.4);
+  margin-right:16px;
+}
+.conn-dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  background:#555;
+  transition:background var(--transition);
+}
+.conn-dot.connected{background:#2ecc71}
+.conn-dot.error{background:#e74c3c}
+.topbar-user{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:5px 10px;
+  border-radius:var(--radius);
+  cursor:pointer;
+  transition:background var(--transition);
+}
+.topbar-user:hover{background:rgba(255,255,255,.06)}
+.user-avatar{
+  width:30px;height:30px;
+  border-radius:50%;
+  background:var(--navy-light);
+  border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;
+  color:var(--gold-light);
+  flex-shrink:0;
+}
+.user-info{text-align:right}
+.user-name{font-size:12px;font-weight:500;color:var(--white)}
+.user-role{
+  font-size:10px;
+  color:var(--gold-light);
+  font-weight:300;
+}
+
+/* ── LAYOUT ──────────────────────────────── */
+.layout{display:flex;flex:1;overflow:hidden;min-height:0}
+.content{flex:1;overflow-y:auto;padding:0;min-width:0}
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar{
+  width:var(--sidebar);
+  background:var(--navy-mid);
+  display:flex;
+  flex-direction:column;
+  flex-shrink:0;
+  overflow-y:auto;
+}
+.nav-group{padding:16px 0 4px}
+.nav-group-label{
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.25);
+  padding:0 16px;
+  margin-bottom:4px;
+}
+.nav-link{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 16px;
+  cursor:pointer;
+  color:rgba(255,255,255,.55);
+  font-size:13px;
+  font-weight:400;
+  border-left:3px solid transparent;
+  transition:all var(--transition);
+  user-select:none;
+}
+.nav-link:hover{
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.85);
+}
+.nav-link.active{
+  background:rgba(160,120,58,.12);
+  border-left-color:var(--gold);
+  color:var(--gold-light);
+  font-weight:500;
+}
+.nav-link svg{width:15px;height:15px;flex-shrink:0;opacity:.8}
+.nav-link.active svg{opacity:1}
+
+.sidebar-footer{
+  margin-top:auto;
+  padding:14px 16px;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.conn-status-pill{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:11px;
+  color:rgba(255,255,255,.35);
+  margin-bottom:6px;
+}
+.sidebar-hint{
+  font-size:10px;
+  color:rgba(255,255,255,.2);
+  line-height:1.5;
+  cursor:pointer;
+  text-decoration:underline;
+  text-decoration-color:rgba(255,255,255,.15);
+}
+.sidebar-hint:hover{color:rgba(255,255,255,.4)}
+
+/* ── CONTENT ─────────────────────────────── */
+.page{display:none;animation:fadeIn .2s ease;padding:28px 30px}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ── PAGE HEADER ─────────────────────────── */
+.page-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:22px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--paper-dark);
+  gap:16px;
+}
+.page-head h1{
+  font-family:'Libre Baskerville',serif;
+  font-size:22px;
+  font-weight:700;
+  color:var(--navy);
+  line-height:1.15;
+}
+.page-head p{
+  font-size:12px;
+  color:var(--ink-muted);
+  margin-top:4px;
+  font-weight:300;
+}
+.page-head-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* ── BUTTONS ─────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:var(--radius);
+  font-size:12px;font-weight:500;cursor:pointer;
+  border:none;font-family:'Outfit',sans-serif;
+  transition:all var(--transition);
+  white-space:nowrap;
+}
+.btn svg{width:14px;height:14px}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:var(--gold-light)}
+.btn-ghost{background:transparent;color:var(--ink-mid);border:1px solid var(--paper-dark)}
+.btn-ghost:hover{background:var(--paper-mid)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── STATS ───────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{
+  background:var(--white);
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  box-shadow:var(--shadow-sm);
+}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+.stat-value{font-family:'Libre Baskerville',serif;font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+.stat-sub{font-size:11px;color:var(--ink-muted);margin-top:4px;font-weight:300}
+.stat.accent{border-left:3px solid var(--gold)}
+.stat.warn{border-left:3px solid #e67e22}
+.stat.danger{border-left:3px solid var(--red)}
+
+/* ── SEARCH BAR ──────────────────────────── */
+.search-row{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+.search-field{
+  flex:1;position:relative;
+}
+.search-field svg{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:15px;height:15px;color:var(--ink-muted);pointer-events:none;
+}
+.search-field input{
+  width:100%;height:38px;
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  padding:0 12px 0 36px;
+  font-size:13px;font-family:'Outfit',sans-serif;
+  background:var(--white);color:var(--ink);
+  outline:none;transition:border-color var(--transition);
+}
+.search-field input:focus{border-color:var(--navy-light);box-shadow:0 0 0 3px rgba(26,54,96,.08)}
+.search-field input::placeholder{color:var(--ink-muted);font-weight:300}
+.filter-sel{
+  height:38px;border:1px solid var(--paper-dark);
+  border-radius:var(--radius);padding:0 10px;
+  font-size:12px;font-family:'Outfit',sans-serif;
+  background:var(--white);color:var(--ink);
+  outline:none;cursor:pointer;min-width:150px;
+}
+
+/* ── TABLE ───────────────────────────────── */
+.table-card{
+  background:var(--white);
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.table-card-header{
+  padding:12px 16px;
+  border-bottom:1px solid var(--paper-mid);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.table-card-header span{font-size:12px;font-weight:500;color:var(--ink-mid)}
+.table-card-header small{font-size:11px;color:var(--ink-muted)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{background:var(--navy)}
+thead th{
+  padding:10px 14px;text-align:left;
+  font-weight:500;font-size:11px;
+  letter-spacing:.3px;color:rgba(255,255,255,.85);
+  white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid var(--paper-mid);transition:background var(--transition);cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--gold-pale)}
+td{padding:10px 14px;color:var(--ink-mid);vertical-align:middle}
+td.primary{font-weight:500;color:var(--ink)}
+.empty-state{text-align:center;padding:40px;color:var(--ink-muted)}
+.empty-state svg{width:36px;height:36px;margin:0 auto 10px;opacity:.25;display:block}
+.empty-state p{font-size:13px}
+
+/* ── BADGES ──────────────────────────────── */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 8px;border-radius:20px;
+  font-size:11px;font-weight:500;white-space:nowrap;
+}
+.b-ok{background:var(--green-bg);color:var(--green)}
+.b-warn{background:var(--amber-bg);color:var(--amber)}
+.b-danger{background:var(--red-bg);color:var(--red)}
+.b-neutral{background:var(--paper-mid);color:var(--ink-muted)}
+.b-blue{background:var(--blue-bg);color:var(--navy)}
+.b-active{background:var(--green-bg);color:var(--green)}
+.b-encours{background:var(--amber-bg);color:var(--amber)}
+.b-archive{background:var(--paper-mid);color:var(--ink-muted)}
+
+/* ── FORM ────────────────────────────────── */
+.form-card{
+  background:var(--white);
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  padding:24px 28px;
+  max-width:780px;
+  box-shadow:var(--shadow-sm);
+}
+.form-section{
+  margin-bottom:22px;
+}
+.form-section-title{
+  font-family:'Libre Baskerville',serif;
+  font-size:14px;font-weight:700;
+  color:var(--navy);
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--paper-mid);
+  display:flex;align-items:center;gap:8px;
+}
+.form-section-title svg{width:16px;height:16px;color:var(--gold)}
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.span-2{grid-column:span 2}
+.field{display:flex;flex-direction:column;gap:5px}
+label{font-size:11px;font-weight:600;color:var(--ink-mid);letter-spacing:.2px}
+label .req{color:var(--red);margin-left:2px}
+input,select,textarea{
+  height:36px;
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  padding:0 11px;
+  font-size:13px;font-family:'Outfit',sans-serif;
+  color:var(--ink);background:var(--white);
+  outline:none;transition:border-color var(--transition),box-shadow var(--transition);
+}
+textarea{height:72px;padding:9px 11px;resize:vertical}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--navy-light);
+  box-shadow:0 0 0 3px rgba(26,54,96,.07);
+}
+input::placeholder,textarea::placeholder{color:var(--ink-muted);font-weight:300}
+.form-actions{
+  display:flex;gap:8px;
+  padding-top:16px;
+  border-top:1px solid var(--paper-mid);
+  margin-top:8px;
+}
+
+/* ── INFO BOX ────────────────────────────── */
+.info-box{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:11px 14px;border-radius:var(--radius);
+  margin-bottom:16px;font-size:12px;line-height:1.55;
+}
+.info-box svg{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+.info-box.info{background:var(--blue-bg);color:var(--navy)}
+.info-box.warn{background:var(--amber-bg);color:var(--amber)}
+.info-box.success{background:var(--green-bg);color:var(--green)}
+
+/* ── MODAL ───────────────────────────────── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(14,36,68,.5);z-index:200;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(2px);
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--white);border-radius:10px;
+  width:640px;max-width:95vw;max-height:88vh;
+  overflow-y:auto;box-shadow:var(--shadow-lg);
+}
+.modal-head{
+  padding:18px 22px 14px;
+  border-bottom:1px solid var(--paper-mid);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:var(--white);z-index:1;
+}
+.modal-head h2{
+  font-family:'Libre Baskerville',serif;
+  font-size:17px;font-weight:700;color:var(--navy);
+}
+.modal-body{padding:18px 22px 22px}
+.modal-close{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--paper-mid);border:none;
+  cursor:pointer;font-size:16px;color:var(--ink-muted);
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--transition);
+}
+.modal-close:hover{background:var(--paper-dark)}
+
+/* ── CLIENT DETAIL ───────────────────────── */
+.detail-header{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:18px;padding-bottom:14px;
+  border-bottom:1px solid var(--paper-mid);
+}
+.detail-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Libre Baskerville',serif;
+  font-size:16px;color:var(--gold-light);flex-shrink:0;
+}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.detail-item{
+  padding:9px 12px;background:var(--paper);
+  border-radius:var(--radius);border:1px solid var(--paper-mid);
+}
+.di-label{font-size:10px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.di-value{font-size:13px;color:var(--ink);font-weight:500}
+.dossier-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border:1px solid var(--paper-mid);
+  border-radius:var(--radius);margin-bottom:7px;
+  background:var(--white);
+}
+.dossier-icon{
+  width:32px;height:32px;border-radius:6px;
+  background:var(--blue-bg);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.dossier-icon svg{width:16px;height:16px;color:var(--navy-light)}
+
+/* ── CENTIF ──────────────────────────────── */
+.centif-result{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 16px;border-radius:var(--radius);
+  margin-bottom:10px;border:1px solid transparent;
+}
+.centif-result.found{background:var(--red-bg);border-color:#e8b4b4}
+.centif-result.clear{background:var(--green-bg);border-color:#a8d5b5}
+.centif-result svg{width:20px;height:20px;flex-shrink:0;margin-top:1px}
+
+/* ── SETUP / CONFIG ──────────────────────── */
+.setup-step{
+  display:flex;gap:14px;
+  padding:16px 18px;
+  background:var(--white);
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  margin-bottom:12px;
+  box-shadow:var(--shadow-sm);
+}
+.step-num{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--navy);color:var(--gold-light);
+  font-size:12px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:2px;
+}
+.step-body h3{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px}
+.step-body p{font-size:12px;color:var(--ink-muted);line-height:1.6}
+code{
+  font-family:'DM Mono',monospace;font-size:11px;
+  background:var(--paper);padding:1px 6px;border-radius:3px;
+  color:var(--navy);border:1px solid var(--paper-dark);
+}
+.code-block{
+  background:var(--navy);color:#a8d8a8;
+  font-family:'DM Mono',monospace;font-size:11px;
+  padding:14px;border-radius:var(--radius);
+  line-height:1.7;white-space:pre-wrap;
+  margin-top:10px;overflow-x:auto;
+  user-select:all;cursor:text;
+}
+.api-input{
+  width:100%;height:36px;
+  border:1px solid var(--paper-dark);border-radius:var(--radius);
+  padding:0 11px;font-size:12px;font-family:'DM Mono',monospace;
+  color:var(--ink);background:var(--paper);
+  outline:none;margin-top:7px;
+}
+.api-input:focus{border-color:var(--navy-light)}
+
+/* ── LOADING ─────────────────────────────── */
+.spinner{
+  width:14px;height:14px;
+  border:2px solid var(--paper-dark);
+  border-top-color:var(--navy);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-cell{padding:14px;color:var(--ink-muted);font-size:12px;display:flex;align-items:center;gap:8px}
+
+/* ── TOAST ───────────────────────────────── */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
+.toast{
+  background:var(--navy);color:#fff;
+  padding:10px 16px;border-radius:var(--radius);
+  font-size:12px;font-weight:400;
+  display:flex;align-items:center;gap:9px;
+  box-shadow:var(--shadow-md);
+  animation:toastIn .2s ease;
+  border-left:3px solid var(--gold);
+  max-width:340px;
+}
+.toast.ok{border-left-color:#2ecc71}
+.toast.err{border-left-color:#e74c3c}
+@keyframes toastIn{from{transform:translateX(16px);opacity:0}to{opacity:1;transform:none}}
+
+
+/* ── CAISSE ──────────────────────────────── */
+.caisse-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.caisse-stat{
+  background:var(--white);border:1px solid var(--paper-dark);
+  border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);
+}
+.caisse-stat .cs-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+.caisse-stat .cs-value{font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.caisse-stat .cs-sub{font-size:11px;color:var(--ink-muted);margin-top:4px;font-weight:300}
+.caisse-stat.entrees{border-left:3px solid var(--green)}
+.caisse-stat.entrees .cs-value{color:var(--green)}
+.caisse-stat.sorties{border-left:3px solid var(--red)}
+.caisse-stat.sorties .cs-value{color:var(--red)}
+.caisse-stat.solde{border-left:3px solid var(--gold)}
+.caisse-stat.solde .cs-value{color:var(--navy)}
+.caisse-cols{display:grid;grid-template-columns:1fr 1.6fr;gap:16px;align-items:start}
+.type-toggle{display:flex;gap:8px;margin-bottom:16px}
+.type-btn{
+  flex:1;height:36px;border-radius:var(--radius);
+  font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid var(--paper-dark);
+  background:var(--white);color:var(--ink-muted);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all var(--transition);font-family:'Outfit',sans-serif;
+}
+.type-btn.active-entree{background:var(--green-bg);color:var(--green);border-color:#a8d5b5;font-weight:600}
+.type-btn.active-sortie{background:var(--red-bg);color:var(--red);border-color:#e8b4b4;font-weight:600}
+.amount-in{color:var(--green);font-weight:600;font-family:'DM Mono',monospace}
+.amount-out{color:var(--red);font-weight:600;font-family:'DM Mono',monospace}
+.mode-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.mb-especes{background:var(--amber-bg);color:var(--amber)}
+.mb-mobile{background:var(--blue-bg);color:var(--navy)}
+.mb-cheque{background:var(--paper-mid);color:var(--ink-muted)}
+.mb-virement{background:var(--green-bg);color:var(--green)}
+.bar-section{margin-top:14px}
+.bar-section h4{font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12px}
+.bar-label{width:100px;color:var(--ink-muted);text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:7px;background:var(--paper-mid);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.bar-val{width:90px;color:var(--ink-mid);font-family:'DM Mono',monospace;font-size:11px}
+.month-select{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.month-select select{width:auto;min-width:160px}
+
+
+/* ── CENTIF LOCK + BALANCE ───────────────── */
+.centif-admin-btn{
+  background:none;border:1px solid var(--paper-dark);
+  border-radius:var(--radius);padding:2px 8px;
+  font-size:10px;cursor:pointer;color:var(--ink-muted);
+  font-family:'Outfit',sans-serif;
+  transition:all var(--transition);
+}
+.centif-admin-btn:hover{background:var(--amber-bg);color:var(--amber);border-color:#e8c87a}
+.balance-due{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:20px;
+  font-size:11px;font-weight:600;
+  background:var(--red-bg);color:var(--red);
+}
+.balance-ok{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:20px;
+  font-size:11px;font-weight:500;
+  background:var(--green-bg);color:var(--green);
+}
+.impaye-card{
+  background:var(--red-bg);border:1px solid #e8b4b4;
+  border-radius:var(--radius);padding:10px 14px;
+  margin-bottom:8px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;
+}
+.impaye-card .ic-name{font-size:13px;font-weight:500;color:var(--ink);cursor:pointer}
+.impaye-card .ic-name:hover{color:var(--navy-light);text-decoration:underline}
+.impaye-card .ic-amount{font-size:13px;font-weight:700;color:var(--red);font-family:'DM Mono',monospace}
+.impaye-card .ic-detail{font-size:11px;color:var(--ink-muted);margin-top:2px}
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--paper-mid);margin-bottom:16px}
+.modal-tab{padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--ink-muted);transition:all var(--transition)}
+.modal-tab.active{border-bottom-color:var(--navy);color:var(--navy);font-weight:600}
+.modal-tab:hover:not(.active){color:var(--ink)}
+.modal-tab-content{display:none}
+.modal-tab-content.active{display:block}
+
+/* ── SCROLLBAR ───────────────────────────── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--paper-dark);border-radius:4px}
+
+/* ── TWO COL DASHBOARD ───────────────────── */
+.dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-seal">ÉN</div>
+    <div class="brand-name">Étude Notariale<small>Gestion interne</small></div>
+  </div>
+  <div class="topbar-mid"></div>
+  <div class="topbar-status">
+    <div class="conn-dot" id="connDot"></div>
+    <span id="connLabel">Non connecté</span>
+  </div>
+  <div class="topbar-user" onclick="nav('config')">
+    <div class="user-avatar" id="uAvatar">S</div>
+    <div class="user-info">
+      <div class="user-name" id="uName">Secrétariat</div>
+      <div class="user-role" id="uRole">Secrétaire</div>
+    </div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Principal</div>
+      <div class="nav-link active" data-page="dashboard" onclick="nav('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Tableau de bord
+      </div>
+      <div class="nav-link" data-page="clients" onclick="nav('clients',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Répertoire clients
+      </div>
+      <div class="nav-link" data-page="dossiers" onclick="nav('dossiers',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Dossiers
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Saisie</div>
+      <div class="nav-link" data-page="new-client" onclick="nav('new-client',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Nouveau client
+      </div>
+      <div class="nav-link" data-page="caisse" onclick="nav('caisse',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Caisse
+      </div>
+      <div class="nav-link" data-page="new-doc" onclick="nav('new-doc',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Nouveau document
+      </div>
+    </div>
+    <div class="nav-group admin-only">
+      <div class="nav-group-label">Administration</div>
+      <div class="nav-link" data-page="centif" onclick="nav('centif',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Vérification CENTIF
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Système</div>
+      <div class="nav-link" data-page="config" onclick="nav('config',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Configuration
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="conn-status-pill">
+        <div class="conn-dot" id="sideConnDot"></div>
+        <span id="sideConnLabel">Mode démo</span>
+      </div>
+      <div id="lastUpdated" style="font-size:10px;color:rgba(255,255,255,.2);margin-bottom:4px;display:none">
+        Mis à jour <span id="lastUpdatedTime">—</span>
+      </div>
+      <div class="sidebar-hint" onclick="nav('config')">Connecter Google Sheets →</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-head">
+        <div>
+          <h1>Tableau de bord</h1>
+          <p id="dashDate">Chargement…</p>
+        </div>
+        <div class="page-head-actions">
+          <button class="btn btn-gold" onclick="nav('new-client')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau client
+          </button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat accent">
+          <div class="stat-label">Clients</div>
+          <div class="stat-value" id="statC">—</div>
+          <div class="stat-sub">dans le répertoire</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Dossiers actifs</div>
+          <div class="stat-value" id="statD">—</div>
+          <div class="stat-sub">en cours</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Documents</div>
+          <div class="stat-value" id="statDoc">—</div>
+          <div class="stat-sub">archivés</div>
+        </div>
+        <div class="stat warn admin-only">
+          <div class="stat-label">CENTIF — Alertes</div>
+          <div class="stat-value" id="statCentif">—</div>
+          <div class="stat-sub">à vérifier</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="stat" style="border-left:3px solid var(--green)">
+          <div class="stat-label">Entrées ce mois</div>
+          <div class="stat-value" id="dashEntrees" style="color:var(--green);font-size:20px">—</div>
+          <div class="stat-sub">FCFA</div>
+        </div>
+        <div class="stat" style="border-left:3px solid var(--gold)">
+          <div class="stat-label">Solde net ce mois</div>
+          <div class="stat-value" id="dashSolde" style="color:var(--navy);font-size:20px">—</div>
+          <div class="stat-sub">FCFA · <span style="cursor:pointer;text-decoration:underline;color:var(--navy-light)" onclick="nav('caisse',document.querySelector('[data-page=caisse]'))">Voir caisse →</span></div>
+        </div>
+      </div>
+      <div class="dash-cols">
+        <div class="table-card">
+          <div class="table-card-header"><span>Derniers clients</span><small id="dashClientCount"></small></div>
+          <table><thead><tr><th>Nom</th><th>Téléphone</th><th>CENTIF</th></tr></thead>
+          <tbody id="dashClients"><tr><td colspan="3"><div class="loading-cell"><div class="spinner"></div>Chargement…</div></td></tr></tbody></table>
+        </div>
+        <div class="table-card">
+          <div class="table-card-header"><span>Dossiers récents</span></div>
+          <table><thead><tr><th>Référence</th><th>Type</th><th>Statut</th></tr></thead>
+          <tbody id="dashDossiers"><tr><td colspan="3"><div class="loading-cell"><div class="spinner"></div>Chargement…</div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-top:16px">
+        <div class="table-card-header">
+          <span>Soldes impayés</span>
+          <small>Clients avec montant dossier non soldé</small>
+        </div>
+        <div style="padding:8px 0" id="dashImpayes">
+          <div style="text-align:center;padding:16px;color:var(--ink-muted);font-size:12px">Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CLIENTS ══ -->
+    <div class="page" id="page-clients">
+      <div class="page-head">
+        <div>
+          <h1>Répertoire clients</h1>
+          <p>Recherchez par nom, société ou type de dossier</p>
+        </div>
+        <div class="page-head-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadData()">↻ Actualiser</button>
+          <button class="btn btn-primary" onclick="nav('new-client')">+ Nouveau client</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="qClients" placeholder="Nom, prénom, société…" oninput="filterClients()">
+        </div>
+        <select class="filter-sel" id="fType" onchange="filterClients()">
+          <option value="">Tous types d'acte</option>
+          <option>Acte de vente</option><option>Titre foncier</option>
+          <option>Bail / Location</option><option>Succession / Héritage</option>
+          <option>Procuration</option><option>Jugement</option><option>Autre</option>
+        </select>
+        <select class="filter-sel" id="fCentif" onchange="filterClients()">
+          <option value="">Tous statuts CENTIF</option>
+          <option>✅ OK</option><option>⚠️ VÉRIFIER</option><option>🚫 BLOQUÉ</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Nom complet</th><th>Téléphone</th><th>Email</th>
+            <th>Société / Résidence</th><th>CENTIF</th><th>Dossiers</th><th></th>
+          </tr></thead>
+          <tbody id="clientsTbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--ink-muted)" id="clientsCount"></div>
+    </div>
+
+    <!-- ══ DOSSIERS ══ -->
+    <div class="page" id="page-dossiers">
+      <div class="page-head">
+        <div><h1>Dossiers</h1><p>Tous les dossiers de l'étude</p></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadData()">↻ Actualiser</button>
+      </div>
+      <div class="search-row">
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="qDossiers" placeholder="Référence, client, bien…" oninput="filterDossiers()">
+        </div>
+        <select class="filter-sel" id="fStatut" onchange="filterDossiers()">
+          <option value="">Tous statuts</option>
+          <option>Actif</option><option>En cours</option><option>Archivé</option><option>Clos</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Référence</th><th>Client</th><th>Type d'acte</th><th>Résidence / Bien</th><th>Échéance</th><th>Balance</th><th>Statut</th></tr></thead>
+          <tbody id="dossiersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ NOUVEAU CLIENT ══ -->
+    <div class="page" id="page-new-client">
+      <div class="page-head">
+        <div><h1>Nouveau client</h1><p>Enregistrer un nouveau client dans le répertoire</p></div>
+      </div>
+      <div class="form-card">
+        <div class="form-section">
+          <div class="form-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Informations personnelles
+          </div>
+          <div class="grid grid-2">
+            <div class="field"><label>Nom <span class="req">*</span></label><input id="cNom" placeholder="ex: Konan"></div>
+            <div class="field"><label>Prénom</label><input id="cPrenom" placeholder="ex: Kwadio"></div>
+            <div class="field"><label>Téléphone</label><input id="cTel" type="tel" placeholder="ex: 0707 123 456"></div>
+            <div class="field"><label>Email</label><input id="cEmail" type="email" placeholder="ex: nom@email.com"></div>
+            <div class="field span-2"><label>Adresse postale</label><input id="cAdresse" placeholder="ex: Abidjan, Cocody Danga"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            Informations dossier
+          </div>
+          <div class="grid grid-2">
+            <div class="field"><label>Société / Résidence</label><input id="cSociete" placeholder="ex: Résidence Élias 2"></div>
+            <div class="field"><label>Type d'acte principal</label>
+              <select id="cTypeActe">
+                <option value="">— Sélectionner —</option>
+                <option>Acte de vente</option><option>Titre foncier</option>
+                <option>Bail / Location</option><option>Succession / Héritage</option>
+                <option>Procuration</option><option>Jugement</option><option>Attestation</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="field span-2"><label>Notes internes</label><textarea id="cNotes" placeholder="Informations complémentaires…"></textarea></div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-gold" onclick="saveClient()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Enregistrer le client
+          </button>
+          <button class="btn btn-ghost" onclick="clearForm('client')">Effacer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NOUVEAU DOCUMENT ══ -->
+    <div class="page" id="page-new-doc">
+      <div class="page-head">
+        <div><h1>Nouveau document</h1><p>Associer un document scanné à un dossier client</p></div>
+      </div>
+      <div class="form-card">
+        <div class="form-section">
+          <div class="form-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Informations document
+          </div>
+          <div class="grid grid-2">
+            <div class="field"><label>Client associé <span class="req">*</span></label>
+              <select id="dClient" onchange="updateNomen()"><option value="">— Sélectionner un client —</option></select>
+            </div>
+            <div class="field"><label>Type de document <span class="req">*</span></label>
+              <select id="dType" onchange="updateNomen()">
+                <option value="">— Sélectionner —</option>
+                <option>Acte de vente</option><option>Titre foncier</option>
+                <option>Bail / Location</option><option>Jugement</option>
+                <option>Procuration</option><option>Attestation</option>
+                <option>Quittance</option><option>Succession</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="field"><label>Date du document <span class="req">*</span></label><input type="date" id="dDate" onchange="updateNomen()"></div>
+            <div class="field"><label>Numéro d'acte</label><input id="dNumero" placeholder="ex: 2024/AV/001"></div>
+            <div class="field span-2"><label>Résidence / Bien concerné</label><input id="dBien" placeholder="ex: Résidence Élias 2, Appartement 4B"></div>
+            <div class="field span-2"><label>Parties signataires</label><input id="dParties" placeholder="ex: Konan Kwadio / SCI Élias"></div>
+            <div class="field span-2"><label>Lien Google Drive (scan PDF) <span class="req">*</span></label><input type="url" id="dLien" placeholder="https://drive.google.com/file/d/…"></div>
+            <div class="field span-2"><label>Notes</label><textarea id="dNotes" placeholder="Remarques sur le document…"></textarea></div>
+          </div>
+        </div>
+        <div class="info-box info" id="nomenclatureBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>Nom de fichier suggéré pour Drive : <strong id="nomenValue" style="font-family:'DM Mono',monospace;font-size:11px">CLI000-TypeDoc-AAAAMMJJ.pdf</strong></span>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-gold" onclick="saveDocument()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Enregistrer le document
+          </button>
+          <button class="btn btn-ghost" onclick="clearForm('doc')">Effacer</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ CAISSE ══ -->
+    <div class="page" id="page-caisse">
+      <div class="page-head">
+        <div><h1>Caisse</h1><p>Entrées et sorties — espèces, mobile money, chèques, virements</p></div>
+        <div class="page-head-actions">
+          <div class="month-select">
+            <select id="caisseMonth" onchange="filterCaisse()" style="min-width:130px">
+              <option value="">Tous les mois</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="loadData()">↻ Actualiser</button>
+        </div>
+      </div>
+
+      <div class="caisse-stats">
+        <div class="caisse-stat entrees">
+          <div class="cs-label">Entrées</div>
+          <div class="cs-value" id="csEntrees">—</div>
+          <div class="cs-sub" id="csEntreesSub">FCFA</div>
+        </div>
+        <div class="caisse-stat sorties">
+          <div class="cs-label">Sorties</div>
+          <div class="cs-value" id="csSorties">—</div>
+          <div class="cs-sub" id="csSortiesSub">FCFA</div>
+        </div>
+        <div class="caisse-stat solde">
+          <div class="cs-label">Solde net</div>
+          <div class="cs-value" id="csSolde">—</div>
+          <div class="cs-sub">FCFA</div>
+        </div>
+        <div class="caisse-stat">
+          <div class="cs-label">Transactions</div>
+          <div class="cs-value" id="csTx">—</div>
+          <div class="cs-sub">cette période</div>
+        </div>
+      </div>
+
+      <div class="caisse-cols">
+
+        <!-- FORM -->
+        <div class="form-card" style="max-width:100%">
+          <div class="form-section-title" style="margin-bottom:12px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            Nouvelle transaction
+          </div>
+
+          <div class="type-toggle">
+            <button class="type-btn active-entree" id="btnEntree" onclick="setTxType('Entrée')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              Entrée
+            </button>
+            <button class="type-btn" id="btnSortie" onclick="setTxType('Sortie')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              Sortie
+            </button>
+          </div>
+
+          <div class="grid grid-2" style="gap:12px">
+            <div class="field">
+              <label>Date <span class="req">*</span></label>
+              <input type="date" id="txDate">
+            </div>
+            <div class="field">
+              <label>Montant FCFA <span class="req">*</span></label>
+              <input type="number" id="txMontant" placeholder="ex: 150000" min="0">
+            </div>
+            <div class="field">
+              <label>Mode de paiement <span class="req">*</span></label>
+              <select id="txMode">
+                <option value="">— Sélectionner —</option>
+                <option>Espèces</option>
+                <option>Mobile Money</option>
+                <option>Chèque</option>
+                <option>Virement</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Catégorie <span class="req">*</span></label>
+              <select id="txCategorie">
+                <option value="">— Sélectionner —</option>
+              </select>
+            </div>
+            <div class="field span-2">
+              <label>Client associé</label>
+              <select id="txClient">
+                <option value="">— Aucun (dépense générale) —</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Référence</label>
+              <input type="text" id="txRef" placeholder="n° chèque, réf. Wave…">
+            </div>
+            <div class="field">
+              <label>Enregistré par</label>
+              <input type="text" id="txPar" placeholder="Secrétariat">
+            </div>
+            <div class="field span-2">
+              <label>Description</label>
+              <textarea id="txDesc" placeholder="Note libre…" style="height:56px"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions" style="margin-top:12px">
+            <button class="btn btn-gold" onclick="saveTx()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+              Enregistrer
+            </button>
+            <button class="btn btn-ghost" onclick="clearTxForm()">Effacer</button>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div>
+          <div class="bar-section" style="background:var(--white);border:1px solid var(--paper-dark);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow-sm)">
+            <h4>Répartition par mode de paiement</h4>
+            <div id="caisseBarChart"></div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-card-header">
+              <span>Historique des transactions</span>
+              <small id="txCount"></small>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr>
+                  <th>Date</th><th>Type</th><th>Catégorie</th><th>Client</th><th>Mode</th><th>Montant FCFA</th>
+                </tr></thead>
+                <tbody id="caisseTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ CENTIF ══ -->
+    <div class="page admin-only" id="page-centif">
+      <div class="page-head">
+        <div><h1>Vérification CENTIF</h1><p>Vérifier si un nom signalé figure dans le répertoire</p></div>
+      </div>
+      <div class="form-card" style="margin-bottom:20px">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Recherche rapide
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <div class="search-field" style="flex:1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="centifQ" placeholder="Nom à vérifier…" onkeydown="if(event.key==='Enter')checkCentif()">
+          </div>
+          <button class="btn btn-primary" onclick="checkCentif()">Vérifier</button>
+        </div>
+        <div id="centifResult"></div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header"><span>Clients avec statut à contrôler</span></div>
+        <table><thead><tr><th>Nom</th><th>Téléphone</th><th>Société</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="centifTbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ══ CONFIG ══ -->
+    <div class="page" id="page-config">
+      <div class="page-head">
+        <div><h1>Configuration</h1><p>Connexion à Google Sheets et paramètres</p></div>
+      </div>
+
+      <div class="setup-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Rôle utilisateur pour cette session</h3>
+          <p>Définissez qui utilise l'application sur ce navigateur. Les admins voient la section CENTIF et tous les paramètres.</p>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="setRole('secretaire')">👩 Secrétaire</button>
+            <button class="btn btn-ghost btn-sm" onclick="setRole('notaire')">⚖️ Notaire (lecture)</button>
+            <button class="btn btn-ghost btn-sm" onclick="setRole('admin')">🔑 Administrateur</button>
+          </div>
+          <p style="margin-top:8px;font-size:11px;color:var(--ink-muted)">Rôle actuel : <strong id="currentRoleLabel">Secrétaire</strong></p>
+        </div>
+      </div>
+
+      <div class="setup-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Clé API Google Sheets</h3>
+          <p>Collez ici votre clé API Google (voir guide étape par étape ci-dessous). Elle est sauvegardée dans ce navigateur uniquement.</p>
+          <input type="password" class="api-input" id="apiKeyInput" placeholder="AIzaSy…" oninput="saveApiConfig()">
+          <div style="margin-top:8px">
+            <label style="font-size:11px">ID du Google Sheet</label>
+            <input type="text" class="api-input" id="sheetIdInput" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" oninput="saveApiConfig()">
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+            <button class="btn btn-primary btn-sm" onclick="testConnection()">Tester la connexion</button>
+            <span id="testResult" style="font-size:11px;color:var(--ink-muted)"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Déployer depuis l'ordinateur du bureau</h3>
+          <p>Ce fichier HTML est autonome. Copiez-le sur le bureau du PC du bureau, puis double-cliquez pour l'ouvrir dans Chrome. Aucune installation requise. Pour un accès depuis le Royaume-Uni, hébergez-le gratuitement sur <strong>Google Sites</strong> (accès restreint par email Google).</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- CLIENT DETAIL MODAL -->
+<div class="overlay" id="clientOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Fiche client</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  apiKey:  localStorage.getItem('gApiKey')  || '',
+  sheetId: localStorage.getItem('gSheetId') || '',
+  role:    localStorage.getItem('role')      || 'secretaire',
+  clients: [],
+  dossiers:[],
+  documents:[],
+  filtered_clients:[],
+  filtered_dossiers:[],
+  connected: false,
+  lastUpdated: null,
+  refreshInterval: null,
+};
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function parseFCFA(val) {
+  // Handles "150,000" "150 000" "150000" "150.000" all correctly
+  if(!val) return 0;
+  const cleaned = String(val).replace(/[\s,]/g, '').replace(/\.(?=\d{3})/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
+// ═══════════════════════════════════════════════════════════
+// DEMO DATA
+const DEMO = {
+  clients:[
+    {ID_Client:'CLI-001',Nom:'Konan',Prénom:'Kwadio',Téléphone:'0707 000 001',Email:'kwadio@email.com',Adresse:'Abidjan, Cocody','Société / Résidence':'Résidence Élias 2','Statut CENTIF':'✅ OK','Date création':'2024-01-15',Notes:'Client régulier'},
+    {ID_Client:'CLI-002',Nom:'Diallo',Prénom:'Aminata',Téléphone:'0505 000 002',Email:'aminata@email.com',Adresse:'Abidjan, Plateau','Société / Résidence':'','Statut CENTIF':'✅ OK','Date création':'2024-03-08',Notes:''},
+    {ID_Client:'CLI-003',Nom:'Aka',Prénom:'Jean-Pierre',Téléphone:'0101 000 003',Email:'',Adresse:'Abidjan, Yopougon','Société / Résidence':'État de Côte d\'Ivoire','Statut CENTIF':'⚠️ VÉRIFIER','Date création':'2024-06-21',Notes:'CENTIF en attente'},
+    {ID_Client:'CLI-004',Nom:'Coulibaly',Prénom:'Fatoumata',Téléphone:'0606 000 004',Email:'f.coulibaly@email.com',Adresse:'Bouaké','Société / Résidence':'SARL Coulibaly & Fils','Statut CENTIF':'✅ OK','Date création':'2025-01-10',Notes:''},
+    {ID_Client:'CLI-005',Nom:'N\'Guessan',Prénom:'Marc',Téléphone:'0909 000 005',Email:'',Adresse:'Abidjan, Marcory','Société / Résidence':'','Statut CENTIF':'✅ OK','Date création':'2025-02-28',Notes:''},
+    {ID_Client:'CLI-006',Nom:'Touré',Prénom:'Mariama',Téléphone:'0202 000 006',Email:'mariama.t@email.com',Adresse:'Abidjan, Cocody','Société / Résidence':'SCI Touré Immobilier','Statut CENTIF':'🚫 BLOQUÉ','Date création':'2025-03-05',Notes:'Dossier suspendu'},
+  ],
+  dossiers:[
+    {ID_Dossier:'DOS-001',Référence:'CLI001-VENTE-ELIAS2-2024',ID_Client:'CLI-001',Client:'Konan Kwadio','Type d\'acte':'Acte de vente','Résidence / Bien':'Résidence Élias 2, Apt 4B','Date ouverture':'2024-01-15',Statut:'Actif','Montant total':'800000','Date échéance':'2026-06-30'},
+    {ID_Dossier:'DOS-002',Référence:'CLI001-BAIL-COCODY-2024',ID_Client:'CLI-001',Client:'Konan Kwadio','Type d\'acte':'Bail / Location','Résidence / Bien':'Villa Cocody Danga','Date ouverture':'2024-03-20',Statut:'Archivé','Montant total':'150000','Date échéance':''},
+    {ID_Dossier:'DOS-003',Référence:'CLI002-SUCC-2024',ID_Client:'CLI-002',Client:'Diallo Aminata','Type d\'acte':'Succession / Héritage','Résidence / Bien':'Parcelle 47, Yopougon','Date ouverture':'2024-06-01',Statut:'En cours','Montant total':'500000','Date échéance':'2026-09-01'},
+    {ID_Dossier:'DOS-004',Référence:'CLI003-TF-2024',ID_Client:'CLI-003',Client:'Aka Jean-Pierre','Type d\'acte':'Titre foncier','Résidence / Bien':'Terrain 500m², Bouaké','Date ouverture':'2024-08-15',Statut:'Actif','Montant total':'350000','Date échéance':'2026-07-15'},
+    {ID_Dossier:'DOS-005',Référence:'CLI004-VENTE-2025',ID_Client:'CLI-004',Client:'Coulibaly Fatoumata','Type d\'acte':'Acte de vente','Résidence / Bien':'Appartement Marcory','Date ouverture':'2025-01-10',Statut:'Actif','Montant total':'600000','Date échéance':'2026-08-01'},
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dashDate').textContent =
+    new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dDate').valueAsDate = new Date();
+  document.getElementById('txDate').valueAsDate = new Date();
+  setTxType('Entrée');
+  allTx = [...DEMO_TX];
+  populateMonthFilter();
+  filterCaisse();
+  if(S.apiKey) document.getElementById('apiKeyInput').value = S.apiKey;
+  if(S.sheetId) document.getElementById('sheetIdInput').value = S.sheetId;
+  applyRole(S.role);
+  loadData();
+});
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function nav(pageId, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + pageId);
+  if(page) page.classList.add('active');
+  if(el) el.classList.add('active');
+  else {
+    const found = document.querySelector(`[data-page="${pageId}"]`);
+    if(found) found.classList.add('active');
+  }
+  if(pageId === 'new-doc') populateClientDropdown();
+  if(pageId === 'centif') renderCentifTable();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROLES
+// ═══════════════════════════════════════════════════════════
+function setRole(r) {
+  S.role = r; localStorage.setItem('role', r);
+  applyRole(r);
+  toast('Rôle : ' + {secretaire:'Secrétaire',notaire:'Notaire',admin:'Administrateur'}[r], 'ok');
+}
+
+function applyRole(r) {
+  const labels = {secretaire:'Secrétaire',notaire:'Notaire',admin:'Administrateur'};
+  const initials = {secretaire:'S',notaire:'NO',admin:'AD'};
+  document.getElementById('uAvatar').textContent = initials[r]||'S';
+  document.getElementById('uName').textContent = r==='admin'?'Administrateur':r==='notaire'?'Notaire':'Secrétariat';
+  document.getElementById('uRole').textContent = labels[r]||r;
+  document.getElementById('currentRoleLabel').textContent = labels[r]||r;
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = r==='admin'?'':'none');
+  // Notaire: hide add buttons
+  document.querySelectorAll('.btn-gold').forEach(b => b.style.display = r==='notaire'?'none':'');
+}
+
+// ═══════════════════════════════════════════════════════════
+// GOOGLE SHEETS API
+// ═══════════════════════════════════════════════════════════
+const SHEETS = {
+  CLIENTS:   'CLIENTS!A3:K',
+  DOSSIERS:  'DOSSIERS!A3:J',
+  DOCUMENTS: 'DOCUMENTS!A3:I',
+  CAISSE:    'CAISSE!A3:K',
+};
+
+const CLIENT_HEADERS = ['ID_Client','Nom','Prénom','Téléphone','Email','Adresse','Société / Résidence','Statut CENTIF','Date création','Notes','Dossiers liés'];
+const DOSSIER_HEADERS = ['ID_Dossier','Référence','ID_Client','Client','Type d\'acte','Résidence / Bien','Date ouverture','Statut','Responsable','Notes','Montant total','Date échéance'];
+const DOC_HEADERS = ['ID_Document','Nom fichier','ID_Client','Type document','Date document','Numéro acte','Parties','Lien Drive','Scanné'];
+
+function apiBase() {
+  return `https://sheets.googleapis.com/v4/spreadsheets/${S.sheetId}/values`;
+}
+
+async function readSheet(range) {
+  const url = `${apiBase()}/${encodeURIComponent(range)}?key=${S.apiKey}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('API error ' + r.status);
+  const data = await r.json();
+  return (data.values || []).map(row => {
+    const headers = range.startsWith('CLIENTS') ? CLIENT_HEADERS :
+                    range.startsWith('DOSSIERS') ? DOSSIER_HEADERS :
+                    range.startsWith('CAISSE') ? CAISSE_HEADERS : DOC_HEADERS;
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = row[i] || '');
+    return obj;
+  }).filter(r => r[CLIENT_HEADERS[0]] || r[DOSSIER_HEADERS[0]] || r[DOC_HEADERS[0]]);
+}
+
+async function appendRow(sheet, values) {
+  const url = `${apiBase()}/${encodeURIComponent(sheet+'!A:Z')}:append?valueInputOption=USER_ENTERED&key=${S.apiKey}`;
+  const r = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({values:[values]})
+  });
+  if(!r.ok) throw new Error('Append error ' + r.status);
+  return r.json();
+}
+
+function saveApiConfig() {
+  S.apiKey  = document.getElementById('apiKeyInput').value.trim();
+  S.sheetId = document.getElementById('sheetIdInput').value.trim();
+  localStorage.setItem('gApiKey',  S.apiKey);
+  localStorage.setItem('gSheetId', S.sheetId);
+}
+
+async function testConnection() {
+  saveApiConfig();
+  const el = document.getElementById('testResult');
+  el.textContent = 'Test en cours…';
+  try {
+    await readSheet('CLIENTS!A1:A2');
+    setConnected(true);
+    el.innerHTML = '<span style="color:var(--green)">✅ Connecté !</span>';
+    toast('Google Sheets connecté avec succès', 'ok');
+    loadData();
+  } catch(e) {
+    setConnected(false);
+    el.innerHTML = '<span style="color:var(--red)">❌ Échec — vérifiez la clé API et l\'ID du Sheet</span>';
+    toast('Connexion impossible', 'err');
+  }
+}
+
+function setConnected(v) {
+  S.connected = v;
+  document.querySelectorAll('.conn-dot').forEach(d => {
+    d.className = 'conn-dot ' + (v ? 'connected' : 'error');
+  });
+  document.getElementById('connLabel').textContent   = v ? 'Google Sheets connecté' : 'Non connecté';
+  document.getElementById('sideConnLabel').textContent = v ? 'Sheets connecté ✅' : 'Mode démo';
+  document.querySelector('.sidebar-hint').style.display = v ? 'none' : '';
+  if(v) {
+    S.lastUpdated = new Date();
+    updateLastUpdatedLabel();
+    document.getElementById('lastUpdated').style.display = '';
+    // Refresh the label every minute
+    if(S.refreshInterval) clearInterval(S.refreshInterval);
+    S.refreshInterval = setInterval(updateLastUpdatedLabel, 60000);
+  }
+}
+
+function updateLastUpdatedLabel() {
+  if(!S.lastUpdated) return;
+  const now = new Date();
+  const diff = Math.floor((now - S.lastUpdated) / 1000); // seconds
+  let label;
+  if(diff < 60) {
+    label = "à l'instant";
+  } else if(diff < 3600) {
+    const mins = Math.floor(diff / 60);
+    label = `il y a ${mins} min`;
+  } else {
+    const hrs = Math.floor(diff / 3600);
+    label = `il y a ${hrs}h`;
+  }
+  const el = document.getElementById('lastUpdatedTime');
+  if(el) el.textContent = label;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════════════════════
+async function loadData() {
+  if(!S.apiKey || !S.sheetId) {
+    // Use demo data
+    S.clients   = [...DEMO.clients];
+    S.dossiers  = [...DEMO.dossiers];
+    S.documents = [];
+    renderAll();
+    return;
+  }
+  try {
+    const [clients, dossiers, docs, txs] = await Promise.all([
+      readSheet(SHEETS.CLIENTS),
+      readSheet(SHEETS.DOSSIERS),
+      readSheet(SHEETS.DOCUMENTS),
+      readSheet('CAISSE!A3:K'),
+    ]);
+    S.clients   = clients;
+    S.dossiers  = dossiers;
+    S.documents = docs;
+    if(txs && txs.length) allTx = txs;
+    setConnected(true);
+    renderAll();
+    toast('Données actualisées', 'ok');
+  } catch(e) {
+    setConnected(false);
+    // fallback to demo
+    S.clients  = [...DEMO.clients];
+    S.dossiers = [...DEMO.dossiers];
+    renderAll();
+  }
+}
+
+function renderAll() {
+  S.filtered_clients  = [...S.clients];
+  S.filtered_dossiers = [...S.dossiers];
+  renderDash();
+  renderClientsTable();
+  renderDossiersTable();
+  populateClientDropdown();
+  populateTxClientDropdown();
+  renderCentifTable();
+  if(!allTx.length) allTx = [...DEMO_TX];
+  populateMonthFilter();
+  filterCaisse();
+  updateDashCaisse();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDash() {
+  document.getElementById('statC').textContent     = S.clients.length;
+  document.getElementById('statD').textContent     = S.dossiers.filter(d=>['Actif','En cours'].includes(d.Statut)).length;
+  document.getElementById('statDoc').textContent   = S.documents.length || '—';
+  document.getElementById('statCentif').textContent= S.clients.filter(c=>c['Statut CENTIF']!=='✅ OK').length;
+
+  const recent = [...S.clients].reverse().slice(0,6);
+  document.getElementById('dashClients').innerHTML = recent.map(c => `
+    <tr onclick="openClient('${c.ID_Client}')">
+      <td class="primary">${c.Nom} ${c.Prénom}</td>
+      <td>${c.Téléphone||'—'}</td>
+      <td>${centifBadge(c['Statut CENTIF'])}</td>
+    </tr>`).join('') || emptyRow(3,'Aucun client');
+
+  const recentD = [...S.dossiers].reverse().slice(0,5);
+  document.getElementById('dashDossiers').innerHTML = recentD.map(d => `
+    <tr>
+      <td class="primary" style="font-family:'DM Mono',monospace;font-size:11px">${d.Référence||d.ID_Dossier}</td>
+      <td>${d['Type d\'acte']||'—'}</td>
+      <td>${statutBadge(d.Statut)}</td>
+    </tr>`).join('') || emptyRow(3,'Aucun dossier');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLIENTS TABLE
+// ═══════════════════════════════════════════════════════════
+function renderClientsTable() {
+  const body = document.getElementById('clientsTbody');
+  if(!S.filtered_clients.length) {
+    body.innerHTML = `<tr><td colspan="7">${emptyHTML('Aucun client trouvé')}</td></tr>`;
+    document.getElementById('clientsCount').textContent = '';
+    return;
+  }
+  body.innerHTML = S.filtered_clients.map(c => {
+    const dos = S.dossiers.filter(d => d.ID_Client === c.ID_Client);
+    return `<tr onclick="openClient('${c.ID_Client}')">
+      <td class="primary">${c.Nom} ${c.Prénom}</td>
+      <td>${c.Téléphone||'—'}</td>
+      <td>${c.Email ? `<a href="mailto:${c.Email}" style="color:var(--navy-light)" onclick="event.stopPropagation()">${c.Email}</a>` : '—'}</td>
+      <td>${c['Société / Résidence']||'—'}</td>
+      <td>${centifBadge(c['Statut CENTIF'])}</td>
+      <td><span class="badge b-neutral">${dos.length} dossier${dos.length!==1?'s':''}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openClient('${c.ID_Client}')">Voir →</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('clientsCount').textContent =
+    `${S.filtered_clients.length} client(s) sur ${S.clients.length}`;
+}
+
+function filterClients() {
+  const q    = document.getElementById('qClients').value.toLowerCase();
+  const type = document.getElementById('fType').value;
+  const cent = document.getElementById('fCentif').value;
+  S.filtered_clients = S.clients.filter(c => {
+    const matchQ = !q || [c.Nom,c.Prénom,c['Société / Résidence'],c.ID_Client].join(' ').toLowerCase().includes(q);
+    const matchC = !cent || c['Statut CENTIF'] === cent;
+    const clientDos = S.dossiers.filter(d => d.ID_Client === c.ID_Client);
+    const matchT = !type || clientDos.some(d => d['Type d\'acte'] === type);
+    return matchQ && matchC && matchT;
+  });
+  renderClientsTable();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DOSSIERS TABLE
+// ═══════════════════════════════════════════════════════════
+function renderDossiersTable() {
+  const body = document.getElementById('dossiersTbody');
+  if(!S.filtered_dossiers.length) {
+    body.innerHTML = `<tr><td colspan="6">${emptyHTML('Aucun dossier trouvé')}</td></tr>`;
+    return;
+  }
+  body.innerHTML = S.filtered_dossiers.map(d => {
+    const clientTx = allTx.filter(t=>t.ID_Client===d.ID_Client&&t.Type==='Entrée');
+    const paye = clientTx.reduce((s,t)=>s+parseFCFA(t.Montant),0);
+    const total = parseFCFA(d['Montant total']);
+    const solde = total - paye;
+    const balBadge = total>0 ? (solde>0 ?
+      `<span class="balance-due">${solde.toLocaleString('fr-FR')} dû</span>` :
+      `<span class="balance-ok">Soldé</span>`) : '<span class="badge b-neutral">—</span>';
+    const echeance = d['Date échéance'];
+    const isOverdue = echeance && new Date(echeance) < new Date() && d.Statut !== 'Archivé' && d.Statut !== 'Clos';
+    return `<tr onclick="openClient('${d.ID_Client}')">
+      <td class="primary" style="font-family:'DM Mono',monospace;font-size:11px">${d.Référence||d.ID_Dossier}</td>
+      <td>${d.Client||'—'}</td>
+      <td>${d['Type d\'acte']||'—'}</td>
+      <td>${d['Résidence / Bien']||'—'}</td>
+      <td>${isOverdue?`<span style="color:var(--red);font-weight:600">${echeance} ⚠️</span>`:echeance||d['Date ouverture']||'—'}</td>
+      <td>${balBadge}</td>
+      <td>${statutBadge(d.Statut)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterDossiers() {
+  const q = document.getElementById('qDossiers').value.toLowerCase();
+  const s = document.getElementById('fStatut').value;
+  S.filtered_dossiers = S.dossiers.filter(d => {
+    const mQ = !q || [d.Référence,d.Client,d['Résidence / Bien'],d['Type d\'acte']].join(' ').toLowerCase().includes(q);
+    const mS = !s || d.Statut === s;
+    return mQ && mS;
+  });
+  renderDossiersTable();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLIENT MODAL
+// ═══════════════════════════════════════════════════════════
+function openClient(id) {
+  const c = S.clients.find(x => x.ID_Client === id);
+  if(!c) return;
+  const dos = S.dossiers.filter(d => d.ID_Client === id);
+  const clientTx = allTx.filter(t => t.ID_Client === id).sort((a,b)=>b.Date.localeCompare(a.Date));
+  const initials = (c.Nom[0]||'') + (c.Prénom[0]||'');
+
+  const totalPaye = clientTx.filter(t=>t.Type==='Entrée').reduce((s,t)=>s+parseFCFA(t.Montant),0);
+  const totalDu = dos.reduce((s,d)=>s+parseFCFA(d['Montant total']),0);
+  const solde = totalDu - totalPaye;
+
+  const isAdmin = S.role === 'admin';
+  const centifControl = isAdmin ? `
+    <div style="display:flex;align-items:center;gap:8px">
+      ${centifBadge(c['Statut CENTIF'])}
+      <select onchange="updateCentifStatus('${id}',this.value)" style="height:28px;font-size:11px;padding:0 6px;border-radius:5px;border:1px solid var(--paper-dark)">
+        <option ${c['Statut CENTIF']==='✅ OK'?'selected':''}>✅ OK</option>
+        <option ${c['Statut CENTIF']==='⚠️ VÉRIFIER'?'selected':''}>⚠️ VÉRIFIER</option>
+        <option ${c['Statut CENTIF']==='🚫 BLOQUÉ'?'selected':''}>🚫 BLOQUÉ</option>
+      </select>
+    </div>` : centifBadge(c['Statut CENTIF']);
+
+  document.getElementById('modalTitle').textContent = c.Nom + ' ' + c.Prénom;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar">${initials}</div>
+      <div style="flex:1">
+        <div style="font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;color:var(--navy)">${c.Nom} ${c.Prénom}</div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:3px">${c['Société / Résidence']||'Particulier'} · ${c.ID_Client}</div>
+      </div>
+      ${centifControl}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--green-bg);border-radius:var(--radius);padding:10px 12px;text-align:center">
+        <div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Total payé</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace">${totalPaye.toLocaleString('fr-FR')}</div>
+        <div style="font-size:10px;color:var(--green)">FCFA</div>
+      </div>
+      <div style="background:${totalDu>0?'var(--amber-bg)':'var(--paper)'};border-radius:var(--radius);padding:10px 12px;text-align:center">
+        <div style="font-size:10px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Total dossiers</div>
+        <div style="font-size:16px;font-weight:700;color:var(--amber);font-family:'DM Mono',monospace">${totalDu.toLocaleString('fr-FR')}</div>
+        <div style="font-size:10px;color:var(--amber)">FCFA</div>
+      </div>
+      <div style="background:${solde>0?'var(--red-bg)':'var(--green-bg)'};border-radius:var(--radius);padding:10px 12px;text-align:center">
+        <div style="font-size:10px;font-weight:600;color:${solde>0?'var(--red)':'var(--green)'};text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${solde>0?'Solde dû':'Soldé'}</div>
+        <div style="font-size:16px;font-weight:700;color:${solde>0?'var(--red)':'var(--green)'};font-family:'DM Mono',monospace">${Math.abs(solde).toLocaleString('fr-FR')}</div>
+        <div style="font-size:10px;color:${solde>0?'var(--red)':'var(--green)'}">FCFA</div>
+      </div>
+    </div>
+
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchModalTab('info')">Informations</div>
+      <div class="modal-tab" onclick="switchModalTab('dossiers')">Dossiers (${dos.length})</div>
+      <div class="modal-tab" onclick="switchModalTab('transactions')">Transactions (${clientTx.length})</div>
+    </div>
+
+    <div class="modal-tab-content active" id="mTab-info">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="di-label">Téléphone</div><div class="di-value">${c.Téléphone||'—'}</div></div>
+        <div class="detail-item"><div class="di-label">Email</div><div class="di-value" style="color:var(--navy-light)">${c.Email||'—'}</div></div>
+        <div class="detail-item"><div class="di-label">Adresse</div><div class="di-value">${c.Adresse||'—'}</div></div>
+        <div class="detail-item"><div class="di-label">Client depuis</div><div class="di-value">${c['Date création']||'—'}</div></div>
+        ${c.Notes?`<div class="detail-item" style="grid-column:span 2"><div class="di-label">Notes</div><div class="di-value" style="font-weight:400">${c.Notes}</div></div>`:''}
+      </div>
+    </div>
+
+    <div class="modal-tab-content" id="mTab-dossiers">
+      ${dos.length ? dos.map(d=>{
+        const paye = allTx.filter(t=>t.ID_Client===id&&t.Type==='Entrée').reduce((s,t)=>s+parseFCFA(t.Montant),0);
+        const total = parseFCFA(d['Montant total']);
+        const bal = total - paye;
+        return `<div class="dossier-row">
+          <div class="dossier-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${d['Type d\'acte']}</div>
+            <div style="font-size:11px;color:var(--ink-muted)">${d['Résidence / Bien']||''} · Ouvert le ${d['Date ouverture']||'—'}</div>
+            ${total>0?`<div style="font-size:11px;margin-top:2px">${total>0?'Honoraires: <b>'+total.toLocaleString('fr-FR')+' FCFA</b>':''}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            ${statutBadge(d.Statut)}
+            ${total>0?(bal>0?`<span class="balance-due">${bal.toLocaleString('fr-FR')} dû</span>`:`<span class="balance-ok">Soldé</span>`):''}
+          </div>
+        </div>`;
+      }).join('') :
+      `<div style="text-align:center;padding:20px;color:var(--ink-muted);font-size:13px">Aucun dossier pour ce client</div>`}
+    </div>
+
+    <div class="modal-tab-content" id="mTab-transactions">
+      ${clientTx.length ? `
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--navy)">
+          <th style="padding:8px 12px;text-align:left;font-weight:500;font-size:11px;color:rgba(255,255,255,.85)">Date</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:500;font-size:11px;color:rgba(255,255,255,.85)">Catégorie</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:500;font-size:11px;color:rgba(255,255,255,.85)">Mode</th>
+          <th style="padding:8px 12px;text-align:right;font-weight:500;font-size:11px;color:rgba(255,255,255,.85)">Montant FCFA</th>
+        </tr></thead>
+        <tbody>
+          ${clientTx.map((t,i)=>{
+            const isIn = t.Type==='Entrée';
+            const modeClass = {'Espèces':'mb-especes','Mobile Money':'mb-mobile','Chèque':'mb-cheque','Virement':'mb-virement'}[t.Mode]||'mb-cheque';
+            const d = t.Date.split('-');
+            return `<tr style="border-bottom:1px solid var(--paper-mid);background:${i%2?'var(--paper)':'var(--white)'}">
+              <td style="padding:8px 12px;color:var(--ink-mid)">${d[2]}/${d[1]}/${d[0]}</td>
+              <td style="padding:8px 12px;color:var(--ink)">${t.Catégorie||'—'}</td>
+              <td style="padding:8px 12px"><span class="mode-badge ${modeClass}">${t.Mode||'—'}</span></td>
+              <td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${isIn?'var(--green)':'var(--red)'}">${isIn?'+':'−'}${parseFCFA(t.Montant).toLocaleString('fr-FR')}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>` :
+      `<div style="text-align:center;padding:20px;color:var(--ink-muted);font-size:13px">Aucune transaction enregistrée pour ce client</div>`}
+    </div>
+  `;
+  document.getElementById('clientOverlay').classList.add('open');
+}
+
+function switchModalTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>{
+    const tabs = ['info','dossiers','transactions'];
+    t.classList.toggle('active', tabs[i]===tab);
+  });
+  document.querySelectorAll('.modal-tab-content').forEach(c=>{
+    c.classList.toggle('active', c.id==='mTab-'+tab);
+  });
+}
+
+function updateCentifStatus(clientId, newStatus) {
+  if(S.role !== 'admin') { toast('Accès admin requis','err'); return; }
+  const c = S.clients.find(x=>x.ID_Client===clientId);
+  if(c) {
+    c['Statut CENTIF'] = newStatus;
+    renderClientsTable();
+    renderCentifTable();
+    renderDash();
+    toast('Statut CENTIF mis à jour : '+newStatus,'ok');
+  }
+}
+
+function closeModal() { document.getElementById('clientOverlay').classList.remove('open'); }
+document.getElementById('clientOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+// ═══════════════════════════════════════════════════════════
+// SAVE CLIENT
+// ═══════════════════════════════════════════════════════════
+async function saveClient() {
+  const nom = document.getElementById('cNom').value.trim();
+  if(!nom) { toast('Le nom est obligatoire','err'); return; }
+  const id = 'CLI-' + String(S.clients.length + 1).padStart(3,'0');
+  const today = new Date().toISOString().slice(0,10);
+  const row = [
+    id, nom,
+    document.getElementById('cPrenom').value.trim(),
+    document.getElementById('cTel').value.trim(),
+    document.getElementById('cEmail').value.trim(),
+    document.getElementById('cAdresse').value.trim(),
+    document.getElementById('cSociete').value.trim(),
+    '✅ OK', today,
+    document.getElementById('cNotes').value.trim(), ''
+  ];
+
+  const newClient = {};
+  CLIENT_HEADERS.forEach((h,i) => newClient[h] = row[i]||'');
+  S.clients.push(newClient);
+
+  if(S.connected && S.apiKey && S.sheetId) {
+    try {
+      await appendRow('CLIENTS', row);
+      toast(`Client ${nom} enregistré dans Google Sheets (${id})`, 'ok');
+    } catch(e) {
+      toast('Enregistré localement — erreur Sheets : ' + e.message, 'err');
+    }
+  } else {
+    toast(`Client ${nom} enregistré en mode démo (${id})`, 'ok');
+  }
+
+  clearForm('client');
+  renderAll();
+  nav('clients', document.querySelector('[data-page="clients"]'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// SAVE DOCUMENT
+// ═══════════════════════════════════════════════════════════
+function populateClientDropdown() {
+  const sel = document.getElementById('dClient');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Sélectionner un client —</option>' +
+    S.clients.map(c => `<option value="${c.ID_Client}">${c.Nom} ${c.Prénom}${c['Société / Résidence']?' · '+c['Société / Résidence']:''}</option>`).join('');
+  sel.value = cur;
+}
+
+function updateNomen() {
+  const cId  = document.getElementById('dClient').value || 'CLI000';
+  const type = (document.getElementById('dType').value||'TypeDoc').replace(/[^a-zA-ZÀ-ÿ]/g,'').slice(0,12);
+  const date = (document.getElementById('dDate').value||'').replace(/-/g,'')||'AAAAMMJJ';
+  document.getElementById('nomenValue').textContent = `${cId}-${type}-${date}.pdf`;
+}
+
+async function saveDocument() {
+  const cId  = document.getElementById('dClient').value;
+  const type = document.getElementById('dType').value;
+  const date = document.getElementById('dDate').value;
+  const lien = document.getElementById('dLien').value.trim();
+  if(!cId||!type||!date||!lien) { toast('Client, type, date et lien Drive sont obligatoires','err'); return; }
+
+  const client = S.clients.find(c => c.ID_Client === cId);
+  const docId  = 'DOC-' + String(Math.floor(Math.random()*9000)+1000);
+  const nomFichier = `${cId}-${type.replace(/[^a-zA-ZÀ-ÿ]/g,'').slice(0,12)}-${date.replace(/-/g,'')}.pdf`;
+  const row = [
+    docId, nomFichier, cId, type, date,
+    document.getElementById('dNumero').value.trim(),
+    document.getElementById('dParties').value.trim(),
+    lien, '✅'
+  ];
+
+  if(S.connected && S.apiKey && S.sheetId) {
+    try {
+      await appendRow('DOCUMENTS', row);
+      toast(`Document enregistré dans Google Sheets (${docId})`, 'ok');
+    } catch(e) {
+      toast('Erreur Sheets : ' + e.message, 'err');
+    }
+  } else {
+    toast(`Document enregistré en mode démo (${docId})`, 'ok');
+  }
+
+  clearForm('doc');
+}
+
+function clearForm(type) {
+  if(type==='client') {
+    ['cNom','cPrenom','cTel','cEmail','cAdresse','cSociete','cNotes'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('cTypeActe').value='';
+  } else {
+    ['dNumero','dBien','dParties','dLien','dNotes'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('dClient').value='';
+    document.getElementById('dType').value='';
+    document.getElementById('dDate').valueAsDate = new Date();
+  document.getElementById('txDate').valueAsDate = new Date();
+  setTxType('Entrée');
+  allTx = [...DEMO_TX];
+  populateMonthFilter();
+  filterCaisse();
+    updateNomen();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CENTIF
+// ═══════════════════════════════════════════════════════════
+function checkCentif() {
+  const q = document.getElementById('centifQ').value.trim().toLowerCase();
+  if(!q) return;
+  const found = S.clients.filter(c =>
+    `${c.Nom} ${c.Prénom}`.toLowerCase().includes(q)||
+    c.Nom.toLowerCase().includes(q)||
+    c.Prénom.toLowerCase().includes(q)
+  );
+  const div = document.getElementById('centifResult');
+  div.innerHTML = found.length ?
+    found.map(c => `
+      <div class="centif-result found">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <div style="font-weight:600;color:var(--red);margin-bottom:3px">⚠️ CLIENT IDENTIFIÉ — ${c.Nom} ${c.Prénom}</div>
+          <div style="font-size:12px;color:var(--ink-muted)">${c.ID_Client} · ${c['Société / Résidence']||'Particulier'} · ${c.Téléphone||'—'} · Statut : ${c['Statut CENTIF']}</div>
+        </div>
+      </div>`).join('') :
+    `<div class="centif-result clear">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      <div>
+        <div style="font-weight:600;color:var(--green)">✅ Aucun client identifié pour "${q}"</div>
+        <div style="font-size:12px;color:var(--ink-muted)">Ce nom ne figure pas dans le répertoire.</div>
+      </div>
+    </div>`;
+}
+
+function renderCentifTable() {
+  const non = S.clients.filter(c => c['Statut CENTIF'] !== '✅ OK');
+  document.getElementById('centifTbody').innerHTML = non.length ?
+    non.map(c => `<tr>
+      <td class="primary">${c.Nom} ${c.Prénom}</td>
+      <td>${c.Téléphone||'—'}</td>
+      <td>${c['Société / Résidence']||'—'}</td>
+      <td>${centifBadge(c['Statut CENTIF'])}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openClient('${c.ID_Client}')">Voir →</button></td>
+    </tr>`).join('') :
+    `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-muted);font-size:13px">✅ Tous les statuts sont à jour</td></tr>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+function centifBadge(s) {
+  if(!s) return '<span class="badge b-neutral">—</span>';
+  if(s.includes('OK'))      return `<span class="badge b-ok">${s}</span>`;
+  if(s.includes('VÉRIFIER'))return `<span class="badge b-warn">${s}</span>`;
+  if(s.includes('BLOQUÉ'))  return `<span class="badge b-danger">${s}</span>`;
+  return `<span class="badge b-neutral">${s}</span>`;
+}
+
+function statutBadge(s) {
+  const map = {Actif:'b-active','En cours':'b-encours',Archivé:'b-archive',Clos:'b-neutral'};
+  return `<span class="badge ${map[s]||'b-neutral'}">${s||'—'}</span>`;
+}
+
+function emptyRow(cols, msg) {
+  return `<tr><td colspan="${cols}"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg><p>${msg}</p></div></td></tr>`;
+}
+
+function emptyHTML(msg) {
+  return `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg><p>${msg}</p></div>`;
+}
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAISSE
+// ═══════════════════════════════════════════════════════════
+const CAISSE_HEADERS = ['ID_Transaction','Date','Type','Montant','Mode','Catégorie','ID_Client','Client','Référence','Description','Enregistré par'];
+
+const CAT_ENTREE = ['Honoraires','Acompte','Solde dossier','Frais de dossier','Remboursement','Autre entrée'];
+const CAT_SORTIE = ['Loyer','Salaires','Charges sociales','Fournitures','Frais bancaires','Téléphone / Internet','Transport','Autre dépense'];
+
+let txType = 'Entrée';
+let allTx = [];
+let filteredTx = [];
+
+const DEMO_TX = [
+  {ID_Transaction:'TX-001',Date:'2026-05-15',Type:'Entrée',Montant:'150000',Mode:'Mobile Money',Catégorie:'Honoraires',ID_Client:'CLI-001',Client:'Konan Kwadio',Référence:'Wave-4521',Description:'Honoraires acte de vente','Enregistré par':'Secrétariat'},
+  {ID_Transaction:'TX-002',Date:'2026-05-14',Type:'Sortie',Montant:'280000',Mode:'Chèque',Catégorie:'Loyer',ID_Client:'',Client:'',Référence:'CHQ-0421',Description:'Loyer mai 2026','Enregistré par':'Secrétariat'},
+  {ID_Transaction:'TX-003',Date:'2026-05-12',Type:'Entrée',Montant:'500000',Mode:'Espèces',Catégorie:'Acompte',ID_Client:'CLI-002',Client:'Diallo Aminata',Référence:'',Description:'Acompte succession','Enregistré par':'Secrétariat'},
+  {ID_Transaction:'TX-004',Date:'2026-05-10',Type:'Sortie',Montant:'45000',Mode:'Espèces',Catégorie:'Fournitures',ID_Client:'',Client:'',Référence:'',Description:'Papeterie et timbres','Enregistré par':'Secrétariat'},
+  {ID_Transaction:'TX-005',Date:'2026-05-08',Type:'Entrée',Montant:'350000',Mode:'Mobile Money',Catégorie:'Honoraires',ID_Client:'CLI-004',Client:'Coulibaly Fatoumata',Référence:'Orange-7823',Description:'Honoraires titre foncier','Enregistré par':'Secrétariat'},
+  {ID_Transaction:'TX-006',Date:'2026-04-28',Type:'Entrée',Montant:'200000',Mode:'Espèces',Catégorie:'Solde dossier',ID_Client:'CLI-003',Client:'Aka Jean-Pierre',Référence:'',Description:'Solde bail location','Enregistré par':'Secrétariat'},
+  {ID_Transaction:'TX-007',Date:'2026-04-15',Type:'Sortie',Montant:'120000',Mode:'Virement',Catégorie:'Salaires',ID_Client:'',Client:'',Référence:'VIR-042026',Description:'Salaire secrétariat avril','Enregistré par':'Secrétariat'},
+];
+
+function setTxType(t) {
+  txType = t;
+  document.getElementById('btnEntree').className = 'type-btn' + (t==='Entrée' ? ' active-entree' : '');
+  document.getElementById('btnSortie').className = 'type-btn' + (t==='Sortie' ? ' active-sortie' : '');
+  const cats = t === 'Entrée' ? CAT_ENTREE : CAT_SORTIE;
+  const sel = document.getElementById('txCategorie');
+  sel.innerHTML = '<option value="">— Sélectionner —</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function populateTxClientDropdown() {
+  const sel = document.getElementById('txClient');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Aucun (dépense générale) —</option>' +
+    S.clients.map(c=>`<option value="${c.ID_Client}">${c.Nom} ${c.Prénom}${c['Société / Résidence']?' · '+c['Société / Résidence']:''}</option>`).join('');
+  sel.value = cur;
+}
+
+function populateMonthFilter() {
+  const months = [...new Set(allTx.map(t=>t.Date.slice(0,7)))].sort().reverse();
+  const sel = document.getElementById('caisseMonth');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Tous les mois</option>' +
+    months.map(m=>{
+      const [y,mo] = m.split('-');
+      const label = new Date(y,mo-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+      return `<option value="${m}">${label}</option>`;
+    }).join('');
+  if(cur) sel.value = cur;
+}
+
+function filterCaisse() {
+  const month = document.getElementById('caisseMonth').value;
+  filteredTx = month ? allTx.filter(t=>t.Date.startsWith(month)) : [...allTx];
+  renderCaisse();
+}
+
+function renderCaisse() {
+  const entrees = filteredTx.filter(t=>t.Type==='Entrée');
+  const sorties = filteredTx.filter(t=>t.Type==='Sortie');
+  const sumE = entrees.reduce((s,t)=>s+parseFCFA(t.Montant),0);
+  const sumS = sorties.reduce((s,t)=>s+parseFCFA(t.Montant),0);
+  const solde = sumE - sumS;
+
+  const fmt = n => n.toLocaleString('fr-FR');
+  document.getElementById('csEntrees').textContent = fmt(sumE);
+  document.getElementById('csSorties').textContent = fmt(sumS);
+  document.getElementById('csSolde').textContent   = fmt(solde);
+  document.getElementById('csTx').textContent      = filteredTx.length;
+
+  const month = document.getElementById('caisseMonth').value;
+  const periodLabel = month ? new Date(month+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) : 'toutes périodes';
+  document.getElementById('csEntreesSub').textContent = 'FCFA — ' + periodLabel;
+  document.getElementById('csSortiesSub').textContent = 'FCFA — ' + periodLabel;
+
+  renderBarChart(filteredTx);
+  renderTxTable(filteredTx);
+  document.getElementById('txCount').textContent = filteredTx.length + ' transaction(s)';
+}
+
+function renderBarChart(txs) {
+  const modes = ['Espèces','Mobile Money','Chèque','Virement'];
+  const colors = {
+    'Espèces':'var(--amber)',
+    'Mobile Money':'var(--navy-light)',
+    'Chèque':'var(--ink-muted)',
+    'Virement':'var(--green)'
+  };
+  const totals = {};
+  modes.forEach(m => totals[m] = txs.filter(t=>t.Mode===m&&t.Type==='Entrée').reduce((s,t)=>s+parseFCFA(t.Montant),0));
+  const max = Math.max(...Object.values(totals), 1);
+  const div = document.getElementById('caisseBarChart');
+  div.innerHTML = modes.map(m => `
+    <div class="bar-row">
+      <span class="bar-label">${m}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(totals[m]/max*100)}%;background:${colors[m]}"></div></div>
+      <span class="bar-val">${totals[m].toLocaleString('fr-FR')}</span>
+    </div>`).join('');
+}
+
+function renderTxTable(txs) {
+  const body = document.getElementById('caisseTbody');
+  const sorted = [...txs].sort((a,b)=>b.Date.localeCompare(a.Date));
+  if(!sorted.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-muted);font-size:13px">Aucune transaction pour cette période</td></tr>';
+    return;
+  }
+  body.innerHTML = sorted.map(t => {
+    const isIn = t.Type === 'Entrée';
+    const modeClass = {'Espèces':'mb-especes','Mobile Money':'mb-mobile','Chèque':'mb-cheque','Virement':'mb-virement'}[t.Mode]||'mb-cheque';
+    const d = t.Date.split('-');
+    const dateLabel = d[2]+'/'+d[1];
+    return `<tr>
+      <td class="primary">${dateLabel}</td>
+      <td>${isIn ? '<span class="badge b-ok">Entrée</span>' : '<span class="badge b-danger">Sortie</span>'}</td>
+      <td>${t.Catégorie||'—'}</td>
+      <td>${t.Client||'—'}</td>
+      <td><span class="mode-badge ${modeClass}">${t.Mode||'—'}</span></td>
+      <td class="${isIn?'amount-in':'amount-out'}">${isIn?'+':'−'}${parseFCFA(t.Montant).toLocaleString('fr-FR')}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveTx() {
+  const montant = document.getElementById('txMontant').value.trim();
+  const mode    = document.getElementById('txMode').value;
+  const cat     = document.getElementById('txCategorie').value;
+  const date    = document.getElementById('txDate').value;
+  if(!montant||!mode||!cat||!date) { toast('Date, montant, mode et catégorie sont obligatoires','err'); return; }
+
+  const clientId = document.getElementById('txClient').value;
+  const client   = S.clients.find(c=>c.ID_Client===clientId);
+  const id = 'TX-' + String(allTx.length+1).padStart(3,'0');
+  const row = [
+    id, date, txType, montant, mode, cat,
+    clientId, client ? client.Nom+' '+client.Prénom : '',
+    document.getElementById('txRef').value.trim(),
+    document.getElementById('txDesc').value.trim(),
+    document.getElementById('txPar').value.trim() || 'Secrétariat'
+  ];
+
+  const newTx = {};
+  CAISSE_HEADERS.forEach((h,i) => newTx[h] = row[i]||'');
+  allTx.push(newTx);
+
+  if(S.connected && S.apiKey && S.sheetId) {
+    try {
+      await appendRow('CAISSE', row);
+      toast('Transaction enregistrée dans Google Sheets ('+id+')', 'ok');
+    } catch(e) {
+      toast('Enregistré localement — erreur Sheets : '+e.message, 'err');
+    }
+  } else {
+    toast('Transaction enregistrée en mode démo ('+id+')', 'ok');
+  }
+
+  populateMonthFilter();
+  filterCaisse();
+  clearTxForm();
+  updateDashCaisse();
+}
+
+function clearTxForm() {
+  document.getElementById('txMontant').value='';
+  document.getElementById('txRef').value='';
+  document.getElementById('txDesc').value='';
+  document.getElementById('txClient').value='';
+  document.getElementById('txPar').value='';
+  document.getElementById('txMode').value='';
+  document.getElementById('txCategorie').value='';
+  document.getElementById('txDate').valueAsDate=new Date();
+  setTxType('Entrée');
+}
+
+function updateDashCaisse() {
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthTx = allTx.filter(t=>t.Date.startsWith(thisMonth));
+  const sumE = monthTx.filter(t=>t.Type==='Entrée').reduce((s,t)=>s+parseFCFA(t.Montant),0);
+  const sumS = monthTx.filter(t=>t.Type==='Sortie').reduce((s,t)=>s+parseFCFA(t.Montant),0);
+  const soldeEl = document.getElementById('dashSolde');
+  if(soldeEl) soldeEl.textContent = (sumE-sumS).toLocaleString('fr-FR');
+  const entEl = document.getElementById('dashEntrees');
+  if(entEl) entEl.textContent = sumE.toLocaleString('fr-FR');
+  renderImpayes();
+}
+
+</script>
+</body>
+</html>
