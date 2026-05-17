@@ -1307,10 +1307,10 @@ function applyRole(r) {
 // GOOGLE SHEETS API
 // ═══════════════════════════════════════════════════════════
 const SHEETS = {
-  CLIENTS:   'CLIENTS!A3:K',
-  DOSSIERS:  'DOSSIERS!A3:J',
-  DOCUMENTS: 'DOCUMENTS!A3:I',
-  CAISSE:    'CAISSE!A3:K',
+  CLIENTS:   'CLIENTS!A4:K',
+  DOSSIERS:  'DOSSIERS!A4:L',
+  DOCUMENTS: 'DOCUMENTS!A4:I',
+  CAISSE:    'CAISSE!A4:K',
 };
 
 const CLIENT_HEADERS = ['ID_Client','Nom','Prénom','Téléphone','Email','Adresse','Société / Résidence','Statut CENTIF','Date création','Notes','Dossiers liés'];
@@ -1359,7 +1359,7 @@ async function testConnection() {
   const el = document.getElementById('testResult');
   el.textContent = 'Test en cours…';
   try {
-    await readSheet('CLIENTS!A1:A2');
+    await readSheet('CLIENTS!A4:A5');
     setConnected(true);
     el.innerHTML = '<span style="color:var(--green)">✅ Connecté !</span>';
     toast('Google Sheets connecté avec succès', 'ok');
@@ -1424,7 +1424,7 @@ async function loadData() {
       readSheet(SHEETS.CLIENTS),
       readSheet(SHEETS.DOSSIERS),
       readSheet(SHEETS.DOCUMENTS),
-      readSheet('CAISSE!A3:K'),
+      readSheet('CAISSE!A4:K'),
     ]);
     S.clients   = clients;
     S.dossiers  = dossiers;
